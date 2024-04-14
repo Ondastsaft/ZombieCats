@@ -1,4 +1,6 @@
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -6,9 +8,46 @@
     <title>Cats and Zombies</title>
     <link href="css/style.css" rel="stylesheet">
 </head>
+
 <body>
-    <grid>
-        <h1>Cats and Zombies</h1>
-    </grid>    
+    <div class="page-container">
+
+        <div class="header-container">
+            <h1>Cats and Zombies</h1>
+        </div><!--header-container-->
+
+        <div class="content-container">
+            <div class="menu-container">
+                <ul class="menu">
+                    <li><button onclick="startNewGame()">Start New Game</button></li>
+                    <li><button onclick="displayHighScores()">High Score</button></li>
+                </ul>
+            </div><!--menu-container-->
+
+            <div class="message-log" id="message-log">
+            </div><!--message-log-->
+
+            <div class="game-container">
+                
+                
+                    <div class="game-window" id="game-window">
+                      <!-- matrix-item divs will be appended here -->
+                    </div>
+                 
+                <div class="button-area">
+                    <button id="north", onclick="movePlayer('N')">North</button>
+                    <div class="middle-buttons">
+                        <button id="west", onclick="movePlayer('W')">West</button>
+                        <button id="east", onclick="movePlayer('E')">East</button>
+                    </div>
+                    <button id="south", onclick="movePlayer('S')">South</button>
+                </div><!--button-area-->
+
+            </div><!--game-container-->
+        </div>
+
+    </div><!--page container-->
+    <script src="script/zombies.js"></script>
 </body>
+
 </html>
