@@ -1,8 +1,8 @@
-const matrixContainer = document.querySelector("game-window")
+let matrixContainer = document.querySelector("game-window")
 const rows = 5
 const columns = 5
 let gameMatrix = []
-const catPostions = []
+const catPositions = []
 const matrixItems = []
 
 class Player {
@@ -83,10 +83,11 @@ function fillMatrixItems() {
             }
             if (row[j] instanceof Cat) {
                 let position = [i, j]
-                catPostions.push(position)
+                catPositions.push(position)
             }
         }
         matrixItems.push(row)
+
     }
 }
 
@@ -131,10 +132,23 @@ function movePlayer(direction) {
 
 
 function startNewGame() {
+    // debugger
     console.log('Starting new game')
+    wipeOldGameWindow()
     fillMatrixItems()
-    console.log(gameMatrix)
-    displayMatrix()
+    createDivMatrix()
+}
+
+function wipeOldGameWindow() {
+    matrixItems.length = 0
+    catPositions.length = 0
+
+    let gameWindow = document.getElementById('game-window')
+
+    // Remove all child elements of gameWindow
+    while (gameWindow.firstChild) {
+        gameWindow.removeChild(gameWindow.firstChild);
+    }
 }
 
 function createDivMatrix() {
@@ -175,6 +189,8 @@ window.onload = function () {
     
     fillMatrixItems();
     createDivMatrix();
-    console.log('matrixItems')
+    
     console.log(matrixItems)
+    console.log(catPositions)
+   
 }
