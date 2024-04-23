@@ -2,34 +2,96 @@ let matrixContainer = document.querySelector("game-window")
 const rows = 5
 const columns = 5
 const gameMatrix = []
-const catPositions = []
-const matrixItems = []
+const matrixItems = new Map()
 const matrixBackgroundElements = []
+const idCounter = 0
 
-class Player {
-    constructor() {
+class DivElement{
+    constructor(rowInput = null, colInput = null, idInput = null) {
+        this.imagePath = null
+        this.row = rowInput;
+        this.col = colInput;
+        this.id = idInput;
+}
+}
+
+class ActionElement extends DivElement{
+
+}
+
+class Player extends ActionElement {
+    constructor(rowInput = null, colInput = null, idInput = null) {
+        super(rowInput, colInput, idInput)
         this.imagePath = 'images/hero.png'
-        this.alive = true;
-        this.score = 0;
+        this.alive = true
+        this.score = 0
+
     }
 }
 
-class Monster {
-    constructor() {
+class Monster extends ActionElement{
+    constructor(rowInput = null, colInput = null, idInput = null) {
+        super(rowInput, colInput, idInput)
         this.imagePath = 'images/zombiecat.jpg'
     }
 }
 
-class Cat {
-    constructor() {
+class Cat extends ActionElement{
+    constructor(rowInput = null, colInput = null, idInput = null) {
         this.imagePath = 'images/cat.jpg'
+
     }
 }
 
-class Forest {
-    constructor() {
+class Forest extends DivElement {
+    constructor(rowInput = null, colInput = null, idInput = null) {
+        super(rowInput, colInput, idInput)
         this.randomNumber = getRandomInt(1, 5);
         this.imagePath = `images/forest${this.randomNumber}.jpg`;
+    }
+}
+function fillMatrixbackgroundItems() {
+    for (let i = 0; i < 5; i++) {
+        let row = []
+        for (let j = 0; j < 5; j++) {
+            let backgroundElement = new Forest(i,j,`${i}-${j}`)          
+            row.push(backgroundElement)
+        }
+        matrixBackgroundElements.push(row)
+    }
+}
+
+function findEmptySpot(){
+    let placeFound = false;
+    while (!placeFound) {
+        let newRow = getRandomInt(0, 5);
+        let newCol = getRandomInt(0, 5);
+        let positionOccupied = false;
+        for (let [key, item] of matrixItems.entries()) {
+            if (item.row === newRow && item.col === newCol) {
+                positionOccupied = true;
+                break;
+            }
+        }
+
+        if (!positionOccupied) {
+            playerPlaced = true;
+        }
+    }
+    return { row: newRow, col: newCol }
+}
+
+function createNewPlayer(){
+
+    let newPlayerPosition = findEmptySpot()
+    let newPlayer = new Player(newPlayerPosition.row, newPlayerPosition.col, Player1)
+}
+
+function placeCats(){
+    for(let i = 0; i<2; i++){
+        let newCatPositions = findEmptySpot()
+        let newCat = new Cat
+
     }
 }
 
@@ -70,7 +132,7 @@ function createDivMatrix() {
             let itemDiv = document.createElement('div')
             itemDiv.className = 'matrix-item'
             itemDiv.id = `item-${i}${j}`
-            itemDiv.style.backgroundImage = `url(${matrixItems[i][j].imagePath})`
+            itemDiv.style.backgroundImage = `url(${matrixBackgroundElements[i][j].imagePath})`
             gameWindow.appendChild(itemDiv)
         }
     }
@@ -86,21 +148,25 @@ function startNewGame() {
 
 function movePlayer(direction) {
     
-    let playerIndexes = findPlayerIndexes()
-    let tempPlayer = document.getElementById(`item-${playerIndexes[0]}${playerIndexes[1]}`)
-    let oldPosition 
-    debugger
+    let playerIndexes = findPlayerIndexes();
+    let currentPlayerRow = playerIndexes[0];
+    let currentPlayerCol = playerIndexes[1];
+
     switch (direction) {
         case 'N':
-            if (playerIndexes[0] > 0) {
-                debugger
-                oldPosition = document.getElementById(`item-${playerIndexes[0]}${playerIndexes[1]}`)
-                let background = new Forest()
-                oldPosition.style.backgroundImage = background.imagePath
-                matrixItems[playerIndexes[0]][playerIndexes[1]] = background           
-                newPosition = document.getElementById(`item-${playerIndexes[0] - 1}${playerIndexes[1]}`)
-                newPosition = tempPlayer
-                newPosition.style.backgroundImage = `url(${tempPlayer.imagePath})`
+           
+            if (currentPlayerRow > 0) {
+                // Update matrixItems
+                let oldPosition = matrixItems[currentPlayerRow][currentPlayerCol];
+                let newPosition = matrixItems[currentPlayerRow - 1][currentPlayerCol];
+                matrixItems[currentPlayerRow][currentPlayerCol] = new Forest(); // Set old position to Forest
+                matrixItems[currentPlayerRow - 1][currentPlayerCol] = new Player(); // Set new position to Player
+
+                // Update DOM
+                let oldDiv = document.getElementById(`item-${currentPlayerRow}${currentPlayerCol}`);
+                let newDiv = document.getElementById(`item-${currentPlayerRow - 1}${currentPlayerCol}`);
+                oldDiv.style.backgroundImage = `url(${oldPosition.imagePath})`; // Update old position
+                newDiv.style.backgroundImage = `url(${newPosition.imagePath})`; // Update new position
             }
             break;
         case 'E':
@@ -199,8 +265,9 @@ window.onload = function () {
     
     fillMatrixItems();
     createDivMatrix();
-    
+    console.log ("matrixItems")
     console.log(matrixItems)
+
     console.log(catPositions)
    
 }
