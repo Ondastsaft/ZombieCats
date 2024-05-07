@@ -9,7 +9,7 @@ class ActionElement extends DivElement {}
 class Player extends ActionElement {
   constructor(idInput = null) {
     super(idInput);
-    this.imagePath = "/images/hero.png";
+    this.imagePath = "../images/hero.png";
     this.alive = true;
     this.score = 0;
   }
@@ -18,14 +18,14 @@ class Player extends ActionElement {
 class Zombie extends ActionElement {
   constructor(idInput = null) {
     super(idInput);
-    this.imagePath = "/images/zombiecat.jpg";
+    this.imagePath = "../images/zombiecat.jpg";
   }
 }
 
 class Cat extends ActionElement {
   constructor(idInput = null) {
     super(idInput);
-    this.imagePath = "/images/cat.jpg";
+    this.imagePath = "../images/cat.jpg";
   }
 }
 
@@ -33,7 +33,7 @@ class Forest extends DivElement {
   constructor(idInput = null) {
     super(idInput);
     this.randomNumber = HelperFunctions.getRandomInt(1, 5);
-    this.imagePath = `/images/forest${this.randomNumber}.jpg`;
+    this.imagePath = `../images/forest${this.randomNumber}.jpg`;
   }
 }
 
