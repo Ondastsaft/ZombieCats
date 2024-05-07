@@ -18,14 +18,14 @@ class Player extends ActionElement {
 class Zombie extends ActionElement {
   constructor(idInput = null) {
     super(idInput);
-    this.imagePath = "../images/zombiecat.jpg";
+    this.imagePath = `../images/zombiecat.jpg`;
   }
 }
 
 class Cat extends ActionElement {
   constructor(idInput = null) {
     super(idInput);
-    this.imagePath = "../images/cat.jpg";
+    this.imagePath = `../images/cat.jpg`;
   }
 }
 
