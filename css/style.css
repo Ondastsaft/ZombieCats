@@ -85,11 +85,11 @@ body {
     justify-content: center;
     display: flex;
     flex-wrap: wrap;
-    width:32%;
+    width: 32%;
     margin: 7vh;
     padding: 3vh;
     background-size: cover;
-    background-color:  rgba(72, 73, 119, 0.5);
+    background-color: rgba(72, 73, 119, 0.5);
     border: 1vh solid black;
 }
 

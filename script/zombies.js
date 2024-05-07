@@ -1,334 +1,363 @@
-let matrixContainer = document.querySelector("game-window")
-const rows = 5
-const columns = 5
-const gameMatrix = []
-const matrixItems = new Map()
-const matrixBackgroundElements = []
-
-
-class DivElement{
-    constructor(rowInput = null, colInput = null, idInput = null) {
-        this.imagePath = null
-        this.row = rowInput;
-        this.col = colInput;
-        this.id = idInput;
+class DivElement {
+  constructor(idInput = null) {
+    this.id = idInput;
+    this.imagePath = null;
+  }
 }
-}
-
-class ActionElement extends DivElement{
-
-}
+class ActionElement extends DivElement {}
 
 class Player extends ActionElement {
-    constructor(rowInput = null, colInput = null, idInput = null) {
-        super(rowInput, colInput, idInput)
-        this.imagePath = 'images/hero.png'
-        this.alive = true
-        this.score = 0
-
-    }
+  constructor(idInput = null) {
+    super(idInput);
+    this.imagePath = "/images/hero.png";
+    this.alive = true;
+    this.score = 0;
+  }
 }
 
-class Zombie extends ActionElement{
-    constructor(rowInput = null, colInput = null, idInput = null) {
-        super(rowInput, colInput, idInput)
-        this.imagePath = 'images/zombiecat.jpg'
-    }
+class Zombie extends ActionElement {
+  constructor(idInput = null) {
+    super(idInput);
+    this.imagePath = "/images/zombiecat.jpg";
+  }
 }
 
-class Cat extends ActionElement{
-    constructor(rowInput = null, colInput = null, idInput = null) {
-        super(rowInput, colInput, idInput)
-        this.imagePath = 'images/cat.jpg'
-
-    }
+class Cat extends ActionElement {
+  constructor(idInput = null) {
+    super(idInput);
+    this.imagePath = "/images/cat.jpg";
+  }
 }
 
 class Forest extends DivElement {
-    constructor(rowInput = null, colInput = null, idInput = null) {
-        super(rowInput, colInput, idInput)
-        this.randomNumber = getRandomInt(1, 5);
-        this.imagePath = `images/forest${this.randomNumber}.jpg`;
-    }
-}
-function fillMatrixbackgroundItems() {debugger
-    for (let i = 0; i < 5; i++) {
-        let row = []
-        for (let j = 0; j < 5; j++) {
-            let backgroundElement = new Forest(i,j,`${i}-${j}`)          
-            row.push(backgroundElement)
-        }
-        matrixBackgroundElements.push(row)
-    }
-}
-function getRandomInt(min, max) {
-    min = Math.ceil(min)
-    max = Math.floor(max)
-    return Math.floor(Math.random() * (max - min + 1)) + min
+  constructor(idInput = null) {
+    super(idInput);
+    this.randomNumber = HelperFunctions.getRandomInt(1, 5);
+    this.imagePath = `/images/forest${this.randomNumber}.jpg`;
+  }
 }
 
-function findEmptySpot(){
-    debugger
+//Functions to manipulate divs on the gameboard
+class Gameboard {
+  static refreshGameWindow() {
+    for (let i = 0; i < game.rows; i++) {
+      for (let j = 0; j < game.columns; j++) {
+        let id = `item${i}-${j}`;
+        let itemDiv = document.getElementById(id);
+        if (itemDiv) {
+          itemDiv.style.backgroundImage = `url(${game.gameMatrix[i][j].imagePath})`;
+        } else {
+          console.log(`Failed to find div for ${id}`);
+        }
+      }
+    }
+  }
+
+  static createDivMatrix() {
+    let gameWindow = document.getElementById("game-window");
+    for (let i = 0; i < game.rows; i++) {
+      for (let j = 0; j < game.columns; j++) {
+        let itemDiv = document.createElement("div");
+        itemDiv.className = "matrix-item";
+        itemDiv.id = `item${i}-${j}`;
+        gameWindow.appendChild(itemDiv);
+      }
+    }
+  }
+}
+
+// Functions to create and place game elements
+class MatrixElementsCreation {
+  constructor() {}
+  static fillMatrixbackgroundItems() {
+    game.matrixBackgroundElements = HelperFunctions.createMatrix(rows, columns);
+    for (let i = 0; i < game.matrixBackgroundElements.length; i++) {
+      for (let j = 0; j < game.matrixBackgroundElements[i].length; j++) {
+        game.matrixBackgroundElements[i][j] = new Forest();
+      }
+    }
+    console.log(`Matrix background items filled successfully`);
+  }
+
+  static createAllActionElements() {
+    game.matrixActionElements = HelperFunctions.createMatrix(
+      game.rows,
+      game.columns
+    );
+    let position = HelperFunctions.findEmptySpot(game.matrixActionElements);
+    game.matrixActionElements[position.row][position.col] = new Player(
+      "Player"
+    );
+    console.log(`Player created at ${position.row}, ${position.col}`);
+    this.fillCats();
+    this.fillZombies();
+  }
+
+  static fillCats() {
+    for (let i = 0; i < game.cats; i++) {
+      position = HelperFunctions.findEmptySpot(game.matrixActionElements);
+      game.matrixActionElements[position.row][position.col] = new Cat(
+        `Cat-${i + 1}`
+      );
+      console.log(`Cat ${i + 1} created at ${position.row}, ${position.col}`);
+    }
+  }
+  static fillZombies() {
+    for (let i = 0; i < game.zombies; i++) {
+      position = HelperFunctions.findEmptySpot(game.matrixActionElements);
+      game.matrixActionElements[position.row][position.col] = new Zombie(
+        `Zombie-${i + 1}`
+      );
+      console.log(
+        `Zombie ${i + 1} created at ${position.row}, ${position.col}`
+      );
+    }
+  }
+
+  static refreshGameMatrix() {
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < columns; j++) {
+        if (game.gameMatrix[i][j] instanceof ActionElement) {
+          game.gameMatrix[i][j] = game.matrixActionElements[i][j];
+        } else {
+          game.gameMatrix[i][j] = game.matrixBackgroundElements[i][j];
+        }
+      }
+    }
+  }
+}
+// Collects all game logic functions
+class Game {
+  constructor() {
+    if (Game.instance == null) {
+      init();
+      Gameboard.createDivMatrix();
+      Gameboard.refreshGameWindow(tx);
+      runGame();
+    }
+    Game.instance = this;
+  }
+  //Fills the game matrix with background elements then overwrites them with action elements if position holds one
+
+  init() {
+    this.rows = 5;
+    this.columns = 5;
+    this.cats = 2;
+    this.zombies = 2;
+    this.matrixActionElements =
+      MatrixElementsCreation.createAllActionElements();
+    this.matrixBackgroundElements =
+      MatrixElementsCreation.fillMatrixbackgroundItems();
+    this.gameMatrix = MatrixElementsCreation.refreshGameMatrix(
+      this.matrixActionElements,
+      this.matrixBackgroundElements
+    );
+    this.playerAlive = true;
+  }
+
+  runGame() {
+    console.log("Starting new game");
+    document.addEventListener("keydown", function (event) {
+      handleKeyDown(event.key);
+    });
+    console.log(`New game started`);
+  }
+
+  handleKeyDown(pressedKey) {
+    let hasMoved = false;
+    this.movePlayer(pressedKey);
+    moveZombies();
+    moveCats();
+    HelperFunctions.checkForCollision();
+    Gameboard.refreshGameWindow();
+  }
+
+  movePlayer(direction) {
+    let playerPosition = HelperFunctions.findPlayer();
+    HelperFunctions.moveAtIndex(direction, playerPosition);
+  }
+
+  static moveZombies() {
+    for (let i = 0; i < game.matrixActionElements.length; i++) {
+      for (let j = 0; j < game.matrixActionElements[i].length; j++) {
+        if (game.matrixActionElements[i][j] instanceof Zombie) {
+          let zombie = game.matrixActionElements[i][j];
+          while (!hasMoved) {
+            let direction = numberToDirection();
+            HelperFunctions.moveAtIndex(direction);
+            if (!game.matrixActionElements[i][j] === zombie) {
+              hasMoved = true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  static numberToDirection() {
+    let numberToDirection = new Map([
+      [1, "N"],
+      [2, "E"],
+      [3, "W"],
+      [4, "S"],
+    ]);
+    let direction = numberToDirection.get(HelperFunctions.getRandomInt(1, 4));
+    return direction;
+  }
+
+  static moveCats() {
+    for (let i = 0; i < this.gameMatrix.length; i++) {
+      for (let j = 0; j < this.gameMatrix[i].length; j++) {
+        if (this.gameMatrix[i][j] instanceof Cat) {
+          let hasMoved = false;
+          while (!hasMoved) {
+            let numberToDirection = new Map([
+              [1, "N"],
+              [2, "E"],
+              [3, "W"],
+              [4, "S"],
+            ]);
+            let direction = numberToDirection.get(
+              HelperFunctions.getRandomInt(1, 4)
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
+class HelperFunctions {
+  static createMatrix() {
+    let matrix = [];
+    for (let i = 0; i < rows; i++) {
+      let rowArray = [];
+      for (let j = 0; j < columns; j++) {
+        rowArray.push(null);
+      }
+      matrix.push(rowArray);
+    }
+    return matrix;
+  }
+
+  static getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  static findEmptySpot(matrix) {
     let placeFound = false;
-    let newRow = getRandomInt(0, 5);
-    let newCol = getRandomInt(0, 5);
+    let newRow, newCol;
     while (!placeFound) {
-        let positionOccupied = false;
-        for (let [key, item] of matrixItems.entries()) {
-            if (item.row === newRow && item.col === newCol) {
-                positionOccupied = true;
-                newRow = getRandomInt(0, 5);
-                newCol = getRandomInt(0, 5);
-                break;
-            }
-        }
-        if (!positionOccupied) {
-            placeFound = true;
-        }
+      newRow = HelperFunctions.getRandomInt(0, matrix.length - 1);
+      newCol = HelperFunctions.getRandomInt(0, matrix[0].length - 1);
+      if (!(matrix[newRow][newCol] instanceof ActionElement)) {
+        placeFound = true;
+      }
     }
-    return { row: newRow, col: newCol }
-}
+    return { row: newRow, col: newCol };
+  }
 
-function createNewPlayer(){
-    let newPlayerPosition = findEmptySpot()
-    let newPlayer = new Player(newPlayerPosition.row, newPlayerPosition.col, `Player1`)
-    matrixItems.set(`Player-1`, newPlayer)
-    let placedPlayer = matrixItems.get(`Player-1`)
-    if(placedPlayer)
-    console.log(`${placedPlayer.id} placed successfully`)
-}
-
-function placeCats(){
-    for(let i = 0; i<2; i++){
-        let newCatPosition = findEmptySpot()
-        let newCat = new Cat(newCatPosition.row, newCatPosition.col, `Cat-${i}`)
-        matrixItems.set(`Cat-${i}`, newCat)
-        let placedCat = matrixItems.get( `Cat-${i}`)
-        if(placedCat){
-            console.log(`${placedCat.id} placed successfully`)
+  static findPlayer(matrix) {
+    for (let i = 0; i < matrix.length; i++) {
+      for (let j = 0; j < matrix[i].length; j++) {
+        if (matrix[i][j] instanceof Player) {
+          return { row: i, column: j };
         }
-        else{
-            console.log(`Failed to place Zomie-${i}`)
-        }
-
-
+      }
     }
-}
+    return null;
+  }
 
-function placeZombies(){
-    for(let i = 0; i<2; i++){
-        let newZombiePosition = findEmptySpot()
-        let newZombie = new Zombie(newZombiePosition.row, newZombiePosition.col, `Zombie-${i}`)     
-        matrixItems.set(`Zombie-${i}`,newZombie)   
-        if(matrixItems.has(`Zombie-${i}`)){
-            let placedZombie = matrixItems.get(`Zombie-${i}`);
-            if(placedZombie){
-                console.log(`Zombie-${i} placed successfully.`);
-            } else {
-                console.log(`Failed to place Zombie-${i}.`);
-            }
-        }
-    }
-}
+  static moveAtIndex(direction, indexes) {
+    let newMatrix = null;
+    if (indexes) {
+      switch (direction) {
+        case "N":
+          newMatrix = HelperFunctions.moveNorth(matrix, indexes);
 
-function fillMatrixItems(){
-    placeZombies()
-    placeCats()
-    createNewPlayer()
-    createDivMatrix()
-}
-
-function createDivMatrix() {debugger
-    let gameWindow = document.getElementById('game-window')
-
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-            let itemDiv = document.createElement('div')
-            itemDiv.className = 'matrix-item'
-            itemDiv.id = `item-${i}${j}`
-            gameWindow.appendChild(itemDiv)
-        }
-    }         
-}
-
-function refreshGameWindow(){
-    matrixItems.forEach((value) =>{
-    itemDiv = document.getElementById(`item-${value.row}${value.col}`)
-    {
-        itemdiv.style.backgroundImage = `url(value.imagePath)`
-    }
-})
-}
-function startNewGame() {
-    // debugger
-    console.log('Starting new game')
-
-    fillMatrixItems()
-    createDivMatrix()
-}
-
-function movePlayer(direction) {
-    
-    let playerIndexes = findPlayerIndexes();
-    let currentPlayerRow = playerIndexes[0];
-    let currentPlayerCol = playerIndexes[1];
-
-    switch (direction) {
-        case 'N':
-           
-            if (currentPlayerRow > 0) {
-         
-                let oldPosition = matrixItems[currentPlayerRow][currentPlayerCol];
-                let newPosition = matrixItems[currentPlayerRow - 1][currentPlayerCol];
-                matrixItems[currentPlayerRow][currentPlayerCol] = new Forest(); 
-                matrixItems[currentPlayerRow - 1][currentPlayerCol] = new Player();
-
-                let oldDiv = document.getElementById(`item-${currentPlayerRow}${currentPlayerCol}`);
-                let newDiv = document.getElementById(`item-${currentPlayerRow - 1}${currentPlayerCol}`);
-                oldDiv.style.backgroundImage = `url(${oldPosition.imagePath})`; 
-                newDiv.style.backgroundImage = `url(${newPosition.imagePath})`; 
-            }
-            break;
-        case 'E':
-            if (playerIndexes[1] < matrixItems[0].length - 1) {
-                matrixItems[playerIndexes[0]][playerIndexes[1]] = new Forest()
-                matrixItems[playerIndexes[0]][playerIndexes[1] + 1] = tempPlayer
-            }
-            break;
-        case 'S':
-            if (playerIndexes[0] < matrixItems.length - 1) {
-                matrixItems[playerIndexes[0]][playerIndexes[1]] = new Forest()
-                matrixItems[playerIndexes[0] + 1][playerIndexes[1]] = tempPlayer
-            }
-            break;
-        case 'W':
-            if (playerIndexes[1] > 0) {
-                matrixItems[playerIndexes[0]][playerIndexes[1]] = new Forest()
-                matrixItems[playerIndexes[0]][playerIndexes[1] - 1] = tempPlayer
-            }
-            break;
+          break;
+        case "E":
+          newMatrix = HelperFunctions.moveEast(matrix, indexes);
+          break;
+        case "S":
+          newMatrix = HelperFunctions.moveSouth(matrix, indexes);
+          break;
+        case "W":
+          newMatrix = HelperFunctions.moveWest(matrix, indexes);
+          break;
         default:
-            console.log("Invalid direction!")
-            break;
+          console.log("Invalid entry!");
+          break;
+      }
+    } else {
+      console.log("Player not found!");
     }
+    if (newMatrix) {
+      return newMatrix;
+    } else {
+      console.log("Invalid move!");
+      return null;
+    }
+  }
 
+  static moveNorth(matrix, indexes) {
+    if (indexes.row > 0) {
+      let oldPosition = matrix[indexes.row][playerindexes.col];
+      let newPosition = matrix[indexes.row - 1][playerindexes.col];
+      matrix[indexes.row - 1][playerindexes.col] =
+        matrix[indexes.row][playerindexes.col];
+      matrix[indexes.row][playerindexes.col] = null;
+      return matrix;
+    } else {
+      console.log("Invalid move!");
+      return null;
+    }
+  }
 
-function getRandomInt(min, max) {
-    min = Math.ceil(min)
-    max = Math.floor(max)
-    return Math.floor(Math.random() * (max - min + 1)) + min
+  static moveEast(matrix, indexes) {
+    if (indexes.col < matrix[0].length - 1) {
+      let oldPosition = matrix[indexes.row][indexes.col];
+      let newPosition = matrix[indexes.row][indexes.col + 1];
+      matrix[indexes.row][indexes.col + 1] = oldPosition;
+      matrix[indexes.row][indexes.col] = null;
+    }
+  }
+
+  static moveSouth(matrix, indexes) {
+    if (indexes.row < matrix.length - 1) {
+      let oldPosition = matrix[indexes.row][indexes.col];
+      let newPosition = matrix[indexes.row + 1][indexes.col];
+      matrix[indexes.row + 1][indexes.col] = oldPosition;
+      matrix[indexes.row][indexes.col] = null;
+    }
+  }
+
+  static moveWest(matrix, indexes) {
+    if (indexes.col > 0) {
+      let oldPosition = matrix[indexes.row][indexes.col];
+      let newPosition = matrix[indexes.row][indexes.col - 1];
+      matrix[indexes.row][indexes.col - 1] = oldPosition;
+      matrix[indexes.row][indexes.col] = null;
+    }
+  }
+  static checkForCollision(matrix, indexes) {
+    if (matrix[indexes.row][indexes.col] instanceof Zombie) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
 
-function moveZombies() {
+const game = new Game();
+// const gameboard = new Gameboard();
+// const helperFunctions = new HelperFunctions();
+// const game = new Game();
 
-}
-
-
-window.onload = function () {
-    document.addEventListener('keydown', function (event) {
-        switch (event.key.toUpperCase()) {
-            case 'N':
-                movePlayer('N');
-                break;
-            case 'E':
-                movePlayer('E');
-                break;
-            case 'S':
-                movePlayer('S');
-                break;
-            case 'W':
-                movePlayer('W');
-                break;
-            default:
-                break
-        }
-    })
-    
-   debugger
-   document.addEventListener('DOMContentLoaded', function() {
-    fillMatrixbackgroundItems();
-    fillMatrixItems();
-    createDivMatrix();
-    refreshGameWindow();
-    console.log(matrixItems);
-});
-
-
-
-    // fillMatrixItems();
-    // createDivMatrix();
-    // console.log ("matrixItems")
-    // console.log(matrixItems)
-
-    // console.log(catPositions)
-   
-}
-// let zombiePositions = moveZombies()
-// let result = checkResult()
-}
-
-// function findPlayerIndexes() {
-//     let playerIndexes = []
-//     let playerFound = false
-//     // debugger
-//     for (let i = 0; i < matrixItems.length; i++) {
-//         for (let j = 0; j < matrixItems[i].length; j++) {
-//             if (matrixItems[i][j] instanceof Player) {
-//                 playerIndexes.push(i)
-//                 playerIndexes.push(j)
-//                 playerFound = true
-//                 break
-//             }
-//         }
-//         if (playerFound) break
-//     }
-//     // debugger
-//     return playerIndexes
-// }
-
-// function wipeOldGameWindow() {
-//     matrixItems.length = 0
-//     catPositions.length = 0
-
-//     let gameWindow = document.getElementById('game-window')
-//     while (gameWindow.firstChild) {
-//         gameWindow.removeChild(gameWindow.firstChild);
-//     }
-// }
-
-// function checkResult(newPosition) {
-//     for (let i = 0; i < zombiePositions.length - 1; i++)
-//         if (newposition[0] == zombiePositions[i][0] && newposition[1] == zombiePositions[i][1]) {
-//             return 'You died!!'
-//         }
-// }
-
-
-// function fillMatrixItems() {
-//     let unshuffledItems = []
-//     let placedItems = []
-//     unshuffledItems.push(new Player, new Monster, new Monster, new Monster, new Cat, new Cat, new Cat,)
-//     for (let i = 0; i < 18; i++) {
-//         unshuffledItems.push(new Forest)
-//     }
-//     for (let i = 0; i < 5; i++) {
-//         let row = []
-//         for (let j = 0; j < 5; j++) {
-//             let searchingItem = true
-//             while (searchingItem) {
-//                 let addItemIndex = getRandomInt(0, 24)
-//                 if (!placedItems.includes(addItemIndex)) {
-//                     row.push(unshuffledItems[addItemIndex])
-//                     placedItems.push(addItemIndex)
-//                     searchingItem = false
-//                 }
-//             }
-//             if (row[j] instanceof Cat) {
-//                 let position = [i, j]
-//                 catPositions.push(position)
-//             }
-//         }
-//         matrixItems.push(row)
-//     }
-// }
-// const idCounter = 0
+// document.addEventListener('DOMContentLoaded', function()  {
+// gameboard.matrixElements.fillMatrixbackgroundItems();
+// gameboard.matrixElements.createAllActionElements();
+// gameboard.createDivMatrix();
+// game.refreshGameWindow();
