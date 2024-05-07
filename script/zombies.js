@@ -64,13 +64,25 @@ class Gameboard {
       }
     }
   }
+
+  static refreshGameMatrix() {
+    for (let i = 0; i < game.rows; i++) {
+      for (let j = 0; j < game.columns; j++) {
+        if (game.matrixActionElements[i][j] !== null) {
+          game.gameMatrix[i][j] = game.matrixActionElements[i][j];
+        } else {
+          game.gameMatrix[i][j] = game.matrixBackgroundElements[i][j];
+        }
+      }
+    }
+  }
 }
 
 // Functions to create and place game elements
 class MatrixElementsCreation {
   constructor() {}
   static fillMatrixbackgroundItems() {
-    game.matrixBackgroundElements = HelperFunctions.createMatrix(rows, columns);
+    game.matrixBackgroundElements = HelperFunctions.createMatrix(game.rows, game.columns);
     for (let i = 0; i < game.matrixBackgroundElements.length; i++) {
       for (let j = 0; j < game.matrixBackgroundElements[i].length; j++) {
         game.matrixBackgroundElements[i][j] = new Forest();
@@ -95,7 +107,7 @@ class MatrixElementsCreation {
 
   static fillCats() {
     for (let i = 0; i < game.cats; i++) {
-      position = HelperFunctions.findEmptySpot(game.matrixActionElements);
+      let position = HelperFunctions.findEmptySpot(game.matrixActionElements);
       game.matrixActionElements[position.row][position.col] = new Cat(
         `Cat-${i + 1}`
       );
@@ -104,7 +116,7 @@ class MatrixElementsCreation {
   }
   static fillZombies() {
     for (let i = 0; i < game.zombies; i++) {
-      position = HelperFunctions.findEmptySpot(game.matrixActionElements);
+      let position = HelperFunctions.findEmptySpot(game.matrixActionElements);
       game.matrixActionElements[position.row][position.col] = new Zombie(
         `Zombie-${i + 1}`
       );
@@ -113,27 +125,13 @@ class MatrixElementsCreation {
       );
     }
   }
-
-  static refreshGameMatrix() {
-    for (let i = 0; i < rows; i++) {
-      for (let j = 0; j < columns; j++) {
-        if (game.gameMatrix[i][j] instanceof ActionElement) {
-          game.gameMatrix[i][j] = game.matrixActionElements[i][j];
-        } else {
-          game.gameMatrix[i][j] = game.matrixBackgroundElements[i][j];
-        }
-      }
-    }
-  }
 }
 // Collects all game logic functions
 class Game {
   constructor() {
     if (Game.instance == null) {
-      init();
-      Gameboard.createDivMatrix();
-      Gameboard.refreshGameWindow(tx);
-      runGame();
+      this.init();
+
     }
     Game.instance = this;
   }
@@ -144,50 +142,67 @@ class Game {
     this.columns = 5;
     this.cats = 2;
     this.zombies = 2;
-    this.matrixActionElements =
-      MatrixElementsCreation.createAllActionElements();
-    this.matrixBackgroundElements =
-      MatrixElementsCreation.fillMatrixbackgroundItems();
-    this.gameMatrix = MatrixElementsCreation.refreshGameMatrix(
-      this.matrixActionElements,
-      this.matrixBackgroundElements
-    );
-    this.playerAlive = true;
+    this.matrixActionElements = HelperFunctions.createMatrix()
+    this.matrixBackgroundElements = HelperFunctions.createMatrix();
+    this.gameMatrix = HelperFunctions.createMatrix();
   }
 
   runGame() {
+    MatrixElementsCreation.createAllActionElements();
+     MatrixElementsCreation.fillMatrixbackgroundItems();
+     Gameboard.refreshGameMatrix();
+    Gameboard.createDivMatrix();
+    Gameboard.refreshGameWindow();
+    this.playerAlive = true;
     console.log("Starting new game");
     document.addEventListener("keydown", function (event) {
-      handleKeyDown(event.key);
+      game.handleKeyDown(event.key.toUpperCase());
     });
+
     console.log(`New game started`);
   }
 
   handleKeyDown(pressedKey) {
-    let hasMoved = false;
-    this.movePlayer(pressedKey);
-    moveZombies();
-    moveCats();
-    HelperFunctions.checkForCollision();
+    let hasMoved = game.movePlayer(pressedKey);
+    if (hasMoved) {
+    game.moveZombies();
+    game.moveCats();
+    // HelperFunctions.checkForCollision();
+    Gameboard.refreshGameMatrix();
     Gameboard.refreshGameWindow();
+    }
   }
 
   movePlayer(direction) {
     let playerPosition = HelperFunctions.findPlayer();
-    HelperFunctions.moveAtIndex(direction, playerPosition);
+    let hasMoved = HelperFunctions.moveAtIndex(direction, playerPosition);
+    return hasMoved;
   }
 
-  static moveZombies() {
+  moveZombies() {
     for (let i = 0; i < game.matrixActionElements.length; i++) {
       for (let j = 0; j < game.matrixActionElements[i].length; j++) {
         if (game.matrixActionElements[i][j] instanceof Zombie) {
-          let zombie = game.matrixActionElements[i][j];
+          let hasMoved = false;
           while (!hasMoved) {
-            let direction = numberToDirection();
-            HelperFunctions.moveAtIndex(direction);
-            if (!game.matrixActionElements[i][j] === zombie) {
-              hasMoved = true;
-            }
+            let direction = Game.numberToDirection();
+            hasMoved = HelperFunctions.moveAtIndex(direction,{row: i, column: j});
+          }
+        }
+      }
+    }
+  }
+
+  moveCats() {
+    for (let i = 0; i < game.gameMatrix.length; i++) {
+      for (let j = 0; j < game.gameMatrix[i].length; j++) {
+        if (game.gameMatrix[i][j] instanceof Cat) {
+          let cat = game.gameMatrix[i][j];
+          let hasMoved = false;
+          while (!hasMoved) {
+            let direction = Game.numberToDirection();
+              hasMoved = HelperFunctions.moveAtIndex(direction, {row: i, column: j});
+       
           }
         }
       }
@@ -203,27 +218,6 @@ class Game {
     ]);
     let direction = numberToDirection.get(HelperFunctions.getRandomInt(1, 4));
     return direction;
-  }
-
-  static moveCats() {
-    for (let i = 0; i < this.gameMatrix.length; i++) {
-      for (let j = 0; j < this.gameMatrix[i].length; j++) {
-        if (this.gameMatrix[i][j] instanceof Cat) {
-          let hasMoved = false;
-          while (!hasMoved) {
-            let numberToDirection = new Map([
-              [1, "N"],
-              [2, "E"],
-              [3, "W"],
-              [4, "S"],
-            ]);
-            let direction = numberToDirection.get(
-              HelperFunctions.getRandomInt(1, 4)
-            );
-          }
-        }
-      }
-    }
   }
 }
 
@@ -259,10 +253,10 @@ class HelperFunctions {
     return { row: newRow, col: newCol };
   }
 
-  static findPlayer(matrix) {
-    for (let i = 0; i < matrix.length; i++) {
-      for (let j = 0; j < matrix[i].length; j++) {
-        if (matrix[i][j] instanceof Player) {
+  static findPlayer() {
+    for (let i = 0; i < game.gameMatrix.length; i++) {
+      for (let j = 0; j < game.gameMatrix[i].length; j++) {
+        if (game.gameMatrix[i][j] instanceof Player) {
           return { row: i, column: j };
         }
       }
@@ -271,87 +265,98 @@ class HelperFunctions {
   }
 
   static moveAtIndex(direction, indexes) {
-    let newMatrix = null;
+    let elementToMove = game.gameMatrix[indexes.row][indexes.column];
     if (indexes) {
       switch (direction) {
         case "N":
-          newMatrix = HelperFunctions.moveNorth(matrix, indexes);
-
+          HelperFunctions.moveNorth(indexes);
           break;
         case "E":
-          newMatrix = HelperFunctions.moveEast(matrix, indexes);
+          HelperFunctions.moveEast(indexes);
           break;
         case "S":
-          newMatrix = HelperFunctions.moveSouth(matrix, indexes);
+          HelperFunctions.moveSouth(indexes);
           break;
         case "W":
-          newMatrix = HelperFunctions.moveWest(matrix, indexes);
+          HelperFunctions.moveWest(indexes);
           break;
         default:
           console.log("Invalid entry!");
           break;
       }
     } else {
-      console.log("Player not found!");
+      console.log(`${elementToMove.id} not found!`);
     }
-    if (newMatrix) {
-      return newMatrix;
+    if (game.gameMatrix[indexes.row][indexes.col] !== elementToMove) {
+      console.log(`${elementToMove.id} moved ${direction} successfully!`);
+      return true;
+
     } else {
       console.log("Invalid move!");
-      return null;
+      return false;
     }
   }
 
-  static moveNorth(matrix, indexes) {
+  static moveNorth(indexes) {
     if (indexes.row > 0) {
-      let oldPosition = matrix[indexes.row][playerindexes.col];
-      let newPosition = matrix[indexes.row - 1][playerindexes.col];
-      matrix[indexes.row - 1][playerindexes.col] =
-        matrix[indexes.row][playerindexes.col];
-      matrix[indexes.row][playerindexes.col] = null;
-      return matrix;
+      game.matrixActionElements[indexes.row - 1][indexes.column] =
+        game.matrixActionElements[indexes.row][indexes.column];
+      game.matrixActionElements[indexes.row][indexes.column] = null;
+    } else {
+      console.log("Invalid move!");
+      return null;
+    }
+  }
+  
+  static moveWest(indexes) {
+    if (indexes.column > 0) {
+      game.matrixActionElements[indexes.row][indexes.column - 1] =
+        game.matrixActionElements[indexes.row][indexes.column];
+      game.matrixActionElements[indexes.row][indexes.column] = null;
+    } else {
+      console.log("Invalid move!");
+      return null;
+    }
+  }
+  
+  static moveEast(indexes) {
+    if (indexes.column < game.matrixActionElements[0].length - 1) {
+      game.matrixActionElements[indexes.row][indexes.column + 1] =
+        game.matrixActionElements[indexes.row][indexes.column];
+      game.matrixActionElements[indexes.row][indexes.column] = null;
+    } else {
+      console.log("Invalid move!");
+      return null;
+    }
+  }
+  
+  static moveSouth(indexes) {
+    if (indexes.row < game.matrixActionElements.length - 1) {
+      game.matrixActionElements[indexes.row + 1][indexes.column] =
+        game.matrixActionElements[indexes.row][indexes.column];
+      game.matrixActionElements[indexes.row][indexes.column] = null;
     } else {
       console.log("Invalid move!");
       return null;
     }
   }
 
-  static moveEast(matrix, indexes) {
-    if (indexes.col < matrix[0].length - 1) {
-      let oldPosition = matrix[indexes.row][indexes.col];
-      let newPosition = matrix[indexes.row][indexes.col + 1];
-      matrix[indexes.row][indexes.col + 1] = oldPosition;
-      matrix[indexes.row][indexes.col] = null;
-    }
-  }
-
-  static moveSouth(matrix, indexes) {
-    if (indexes.row < matrix.length - 1) {
-      let oldPosition = matrix[indexes.row][indexes.col];
-      let newPosition = matrix[indexes.row + 1][indexes.col];
-      matrix[indexes.row + 1][indexes.col] = oldPosition;
-      matrix[indexes.row][indexes.col] = null;
-    }
-  }
-
-  static moveWest(matrix, indexes) {
-    if (indexes.col > 0) {
-      let oldPosition = matrix[indexes.row][indexes.col];
-      let newPosition = matrix[indexes.row][indexes.col - 1];
-      matrix[indexes.row][indexes.col - 1] = oldPosition;
-      matrix[indexes.row][indexes.col] = null;
-    }
-  }
-  static checkForCollision(matrix, indexes) {
-    if (matrix[indexes.row][indexes.col] instanceof Zombie) {
+  static checkForCollision(indexes) {
+    if (matrix[indexes.row][indexes.column] instanceof Zombie) {
       return true;
     } else {
       return false;
     }
   }
 }
-
+function startNewGame(){
+  game.runGame();
+}
+const rows = 5;
+const columns = 5;  
 const game = new Game();
+
+
 // const gameboard = new Gameboard();
 // const helperFunctions = new HelperFunctions();
 // const game = new Game();
