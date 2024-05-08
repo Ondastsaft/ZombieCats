@@ -9,7 +9,7 @@ class ActionElement extends DivElement {}
 class Player extends ActionElement {
   constructor(idInput = null) {
     super(idInput);
-    this.imagePath = "/images/hero.png";
+    this.imagePath = "images/hero.png";
     this.alive = true;
     this.score = 0;
   }
